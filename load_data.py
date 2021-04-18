@@ -15,8 +15,7 @@ def read_ocr_tagged_file(filepath):
         lines = file.readlines()
         lines = [line[:len(line) - 1] for line in lines]
         lines = [line.split(',') for line in lines]
-        lines = [{'bbox-top-left':line[:2],
-                  'bbox-bot-right':line[4:6],
+        lines = [{'bbox': [int(i) for i in line[:2] + line[4:6]],
                   'text':','.join(line[8:])
                     } for line in lines]
     return lines
@@ -69,31 +68,34 @@ def get_train_data():
     return train_df
 
 
-def process_for_encode(dataset):
+def boiler_plate_for_encoding(dataset, tokenizer, max_seq_length):
     """
     Parameters
-        dataset
+        dataset, tokenizer, max_seq_length
     Returns
-        processed_passage: list of strings from receipt
-        processed_question: list of keys and answers"""
-    processed_passage = []
-    processed_question = []
+        encoded: list of tokenized
+        bboxes: list of bboxes
+    """
+    encoded = []
+    bboxes = []
     for i in dataset.index:
-        words = [' '+element['text'] for element in dataset['ocr_output'][i]]
-        text = ''.join(words)
-        processed_passage.append(text)
+        words = [element['text'] for element in dataset['ocr_output'][i]]
+        bbox = [element['bbox'] for element in dataset['ocr_output'][i]]
         
-        keys = dataset.columns.to_list()[1:]
-        company = dataset[keys[0]][i]
-        date = dataset[keys[1]][i]
-        address = dataset[keys[2]][i]
-        total = dataset[keys[3]][i]
-        value_str = " ".join([company, date, address, total])
-        i_input = keys[0] + " : " + keys[1] + " : " + keys[2] + " : " + keys[3] + " : " + value_str #see example for why this format: https://github.com/NielsRogge/Transformers-Tutorials/blob/master/LayoutLM/Fine_tuning_LayoutLMForTokenClassification_on_FUNSD.ipynb
-        processed_question.append(i_input)
-    return processed_passage, processed_question
+        token_boxes = [] #tokenize by word/phrase, and adjust number of bounding box copies accordingly
+        for word, box in zip(words, bbox):
+            word_tokens = tokenizer.tokenize(word)
+            token_boxes.extend([box] * len(word_tokens))
+        
+        token_boxes = [[0,0,0,0]] + token_boxes + [[1000,1000,1000,1000]]
+        
+        encoding = tokenizer(' '.join(words), padding = "max_length", truncation = True, max_length = max_seq_length, return_tensors = "pt")
+        encoded.append(encoding)
+        bboxes.append(torch.tensor([token_boxes]))
 
-def encode_data(dataset, tokenizer, max_seq_length=64):
+    return encoded, bboxes
+
+def encode_data(dataset, tokenizer, max_seq_length=512):
     """
     Args:
         dataset
@@ -104,17 +106,12 @@ def encode_data(dataset, tokenizer, max_seq_length=64):
         batch encoding with input_ids, attention_mask and token_type_ids
     """
     
-    passages, questions = process_for_encode(dataset)
+    encoded, bboxes = boiler_plate_for_encoding(dataset, tokenizer, max_seq_length)
+       
+    for i in range(len(encoded)): #attach bbox to each encoded value
+        encoded[i]['bbox'] = bboxes[i]
         
-    batch_encoding = tokenizer(questions, passages, padding = "max_length", truncation = True, max_length = max_seq_length, return_tensors = "pt")
-    
-    return batch_encoding
-#     labels: A list of integers corresponding to the labels for each example,
-#       where 0 is False and 1 is True.
-#   """
-#     ## TODO: Convert the labels to a numeric format and return as a list.
-  
-#     label_str = dataset['label'].to_list() #gets labels from df as list
-#     labels = [1 if i == True else 0 for i in label_str] #1 if label is True,0 if False
+    return encoding
+
     
 #     return labels
