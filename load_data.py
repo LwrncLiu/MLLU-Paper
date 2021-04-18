@@ -88,6 +88,8 @@ def boiler_plate_for_encoding(dataset, tokenizer, max_seq_length):
             token_boxes.extend([box] * len(word_tokens))
         
         token_boxes = [[0,0,0,0]] + token_boxes + [[1000,1000,1000,1000]] + [[0,0,0,0]]*(max_seq_length - len(token_boxes) - 2)
+        if len(token_boxes) > max_seq_length: #truncation of token boxes
+            token_boxes = token_boxes[:max_seq_length - 1] + [[1000,1000,1000,1000]]
         
         encoding = tokenizer(' '.join(words), padding = "max_length", truncation = True, max_length = max_seq_length, return_tensors = "pt")
         encoded.append(encoding)
