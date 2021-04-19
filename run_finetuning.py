@@ -3,12 +3,16 @@ from transformers import LayoutLMTokenizerFast, TrainingArguments, Trainer
 import torch
 import finetuning_utils
 import sroie
+import numpy as np
 import os
 import pandas as pd
 
+df = load_data.get_data()
 
-train_df = load_data.get_train_data()
-val_df = load_data.get_train_data() #need a new function to get validation data
+msk = np.random.rand(len(df)) < 0.8
+
+train_df = df[msk]
+val_df = df[~msk]
 
 tokenizer = LayoutLMTokenizerFast.from_pretrained("microsoft/layoutlm-base-uncased")
 
