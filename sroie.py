@@ -32,4 +32,4 @@ class SROIE_Dataset(Dataset):
             }
         of dataset[0]
         """
-        return self.data.iloc[i].to_dict()
+        return self.encoded_data[i]
