@@ -18,8 +18,7 @@ def read_ocr_tagged_file(filepath):
         lines = file.readlines()
         lines = [line[:len(line) - 1] for line in lines]
         lines = [line.split(',') for line in lines]
-        lines = [{'bbox-top-left':line[:2],
-                  'bbox-bot-right':line[4:6],
+        lines = [{'bbox': [int(i) for i in line[:2] + line[4:6]],
                   'text':','.join(line[8:])
                     } for line in lines]
     return lines
