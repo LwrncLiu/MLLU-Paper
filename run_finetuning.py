@@ -25,7 +25,6 @@ training_args = TrainingArguments(
     per_device_train_batch_size = 8,
     evaluation_strategy = "epoch"
     )
-
 trainer = Trainer(
     model_init = finetuning_utils.model_init,
     train_dataset = train_data,
@@ -34,3 +33,4 @@ trainer = Trainer(
     compute_metrics = finetuning_utils.compute_metrics,
     args = training_args
     )
+trainer.train()
