@@ -15,7 +15,7 @@ sroie_dataset = sroie.SROIE_Dataset(df, tokenizer)
 
 train_size = int(0.8*len(sroie_dataset))
 test_size = len(sroie_dataset)-train_size
-train_dataset, test_dataset = torch.utils.data.random_split(sroie_dataset, [train_size, test_size])
+train_data, test_data = torch.utils.data.random_split(sroie_dataset, [train_size, test_size])
 
 training_args = TrainingArguments(
     output_dir = '/scratch/fs1493/mlu_project',
@@ -26,7 +26,7 @@ training_args = TrainingArguments(
 trainer = Trainer(
     model_init = finetuning_utils.model_init,
     train_dataset = train_data,
-    eval_dataset = val_data,
+    eval_dataset = test_data,
     tokenizer = tokenizer,
     compute_metrics = finetuning_utils.compute_metrics,
     args = training_args
