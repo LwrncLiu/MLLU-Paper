@@ -11,9 +11,8 @@ def compute_metrics(eval_pred):
     """Computes accuracy, f1, precision, and recall from a 
     transformers.trainer_utils.EvalPrediction object.
     """
-    labels = eval_pred.label_ids
-    preds = eval_pred.predictions.argmax(-1)
-    
+    labels = eval_pred.label_ids.flatten()
+    preds = eval_pred.predictions.argmax(-1).flatten()
 
     ## TODO: Return a dictionary containing the accuracy, f1, precision, and recall scores.
     ## You may use sklearn's precision_recall_fscore_support and accuracy_score methods.

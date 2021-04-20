@@ -1,0 +1,19 @@
+There are no DATES detected
+There are no DATES detected
+There are no TOTALS
+There are no DATES detected
+There are no DATES detected
+There are no DATES detected
+There are no DATES detected
+There are no DATES detected
+There are no DATES detected
+There are no DATES detected
+There are no DATES detected
+There are no DATES detected
+There are no TOTALS
+There are no DATES detected
+There are no DATES detected
+{'eval_loss': 0.10815797746181488, 'eval_accuracy': 0.9730084528688525, 'eval_f1': array([0.98405156, 0.92944297, 0.10362694, 0.93513729, 0.96443812]), 'eval_precision': array([0.97896164, 0.90030832, 0.83333333, 0.94226143, 0.96003776]), 'eval_recall': array([0.98919469, 0.96052632, 0.05524862, 0.92812006, 0.96887901]), 'eval_runtime': 0.6665, 'eval_samples_per_second': 183.043, 'epoch': 1.0}
+{'eval_loss': 0.0915774405002594, 'eval_accuracy': 0.9781634221311475, 'eval_f1': array([0.9875712 , 0.95107838, 0.51717902, 0.94183267, 0.96520518]), 'eval_precision': array([0.98747456, 0.9140546 , 0.7486911 , 0.95016077, 0.94877301]), 'eval_recall': array([0.98766785, 0.99122807, 0.39502762, 0.93364929, 0.98221658]), 'eval_runtime': 0.6651, 'eval_samples_per_second': 183.438, 'epoch': 2.0}
+{'eval_loss': 0.08419067412614822, 'eval_accuracy': 0.9803726946721312, 'eval_f1': array([0.98839144, 0.95430393, 0.63914373, 0.95783612, 0.96761965]), 'eval_precision': array([0.98844949, 0.9257732 , 0.71575342, 0.96474359, 0.96260214]), 'eval_recall': array([0.9883334 , 0.98464912, 0.57734807, 0.95102686, 0.97268974]), 'eval_runtime': 0.6665, 'eval_samples_per_second': 183.056, 'epoch': 3.0}
+{'train_runtime': 30.5288, 'train_samples_per_second': 5.994, 'epoch': 3.0}
