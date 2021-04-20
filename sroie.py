@@ -12,7 +12,7 @@ class SROIE_Dataset(Dataset):
     
     def __init__(self, dataframe, tokenizer, max_seq_length = 256):
         self.data = dataframe
-        self.encoded_data = load_data.encode_data(self.data, tokenizer, max_seq_length = max_seq_length)
+        self.encoded = load_data.encode_data(self.data, tokenizer, max_seq_length = max_seq_length)
 
     
     def __len__(self):
@@ -32,4 +32,9 @@ class SROIE_Dataset(Dataset):
             }
         of dataset[0]
         """
-        return self.encoded_data[i]
+        return {
+        'bbox':self.encoded[i]['bbox'].squeeze(),
+        'labels':self.encoded[i]['label'].squeeze(),
+        'input_ids':self.encoded[i]['input_ids'].squeeze(),
+        'attention_mask':self.encoded[i]['attention_mask'].squeeze(),
+        }

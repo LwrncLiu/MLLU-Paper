@@ -34,7 +34,8 @@ def model_init():
     """Returns an initialized model for use in a Hugging Face Trainer."""
     
     model = LayoutLMForTokenClassification.from_pretrained(
-        "microsoft/layoutlm-base-uncased"
+        "microsoft/layoutlm-base-uncased",
+        num_labels=5
         )
     
     model = model.to('cuda')

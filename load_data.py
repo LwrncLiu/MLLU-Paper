@@ -4,13 +4,13 @@ import pandas as pd
 import torch
 import re
 from difflib import SequenceMatcher
+from PIL import Image
 
 def read_ocr_tagged_file(filepath):
     """
     Returns:
         Dict {
-            bbox-top-left  -> [x,y]
-            bbox-bot-right -> [x,y]
+            bbox -> [x0,y0,x1,y1]
             text : text
         }
     """
@@ -18,18 +18,19 @@ def read_ocr_tagged_file(filepath):
         lines = file.readlines()
         lines = [line[:len(line) - 1] for line in lines]
         lines = [line.split(',') for line in lines]
-        lines = [{'bbox': [int(i) for i in line[:2] + line[4:6]],
+        lines = [{'bbox': torch.tensor([int(i) for i in line[:2] + line[4:6]]),
                   'text':','.join(line[8:])
                  } for line in lines]
     return lines
 
 def read_img_file(filepath):
     """
-    NOT IMPLEMENTED
     Returns:
-        None
+        dictionary object with width and height of image
     """
-    return None
+    image = Image.open(filepath)
+    width,height = image.size
+    return {'width':width,'height':height}
 
 def read_label_file(filepath):
     """
@@ -58,15 +59,18 @@ def get_data():
     label_filenames = set([name[:-4] for name in files if name[-3:] == "txt" and name[-5] != ")"])
             
     #files names of all txt ids that appear in task1 & task2
-    names = ocr_tagged_filenames.intersection(label_filenames)
+    names = ocr_tagged_filenames.intersection(label_filenames).intersection(image_filenames)
     
     labels = []
+    sizes = []
     df2 = pd.DataFrame(index = names, columns = {'ocr_output'})
     for name in names:
         df2.at[name, 'ocr_output'] = read_ocr_tagged_file(path_1 + name + ".txt") 
         labels += [read_label_file(path_2 + name + ".txt")]
+        sizes += [read_img_file(path_2 + name + ".jpg")]
     df1 = pd.DataFrame(labels,index=names)
-    train_df = pd.concat([df1, df2], axis=1).rename_axis('file_name').reset_index()
+    df3 = pd.DataFrame(sizes,index = names)
+    train_df = pd.concat([df1, df2, df3], axis=1).rename_axis('file_name').reset_index()
     return train_df
 
 def assign_line_label(line: str, entities):
@@ -126,7 +130,10 @@ def boiler_plate(dataset, tokenizer, max_seq_length):
     adj_labels=[]
     for i in dataset.index:
         words = [element['text'] for element in dataset['ocr_output'][i]]
-        bbox = [element['bbox'] for element in dataset['ocr_output'][i]]
+        width = dataset['width'][i]
+        height = dataset['height'][i]
+        scaling_factor = torch.tensor([1000/width,1000/height,1000/width,1000/height])
+        bbox = [element['bbox'] * scaling_factor for element in dataset['ocr_output'][i]]
         label = labels[i]
         
         token_boxes = []
@@ -145,7 +152,7 @@ def boiler_plate(dataset, tokenizer, max_seq_length):
         
         encoding = tokenizer(' '.join(words), padding = "max_length", truncation = True, max_length = max_seq_length, return_tensors = "pt")
         encoded.append(encoding)
-        bboxes.append(torch.tensor([token_boxes]))
+        bboxes.append(torch.tensor([token_boxes])) 
         adj_labels.append(torch.tensor([label_list]))
 
     return encoded, bboxes, adj_labels
@@ -164,7 +171,6 @@ def encode_data(dataset, tokenizer, max_seq_length=64):
     encoded, bboxes, labels = boiler_plate(dataset, tokenizer, max_seq_length)
     
     for i in range(len(encoded)):
-        encoded[i]['bbox'], encoded[i]['label'] = bboxes[i].squeeze(), labels[i].squeeze()
+        encoded[i]['bbox'], encoded[i]['label'] = bboxes[i], labels[i]
     
-    print(encoded[i]['bbox'].shape,encoded[i]['input_ids'].shape,encoded[i]['attention_mask'].shape)
     return encoded
