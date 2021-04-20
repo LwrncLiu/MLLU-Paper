@@ -133,7 +133,7 @@ def boiler_plate(dataset, tokenizer, max_seq_length):
         width = dataset['width'][i]
         height = dataset['height'][i]
         scaling_factor = torch.tensor([1000/width,1000/height,1000/width,1000/height])
-        bbox = [element['bbox'] * scaling_factor for element in dataset['ocr_output'][i]]
+        bbox = [(element['bbox'] * scaling_factor).long() for element in dataset['ocr_output'][i]]
         label = labels[i]
         
         token_boxes = []
