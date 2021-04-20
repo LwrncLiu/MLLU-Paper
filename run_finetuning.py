@@ -11,8 +11,8 @@ df = load_data.get_data()
 
 msk = np.random.rand(len(df)) < 0.8
 
-train_df = df[msk]
-val_df = df[~msk]
+train_df = df[msk].reset_index(drop=True)
+val_df = df[~msk].reset_index(drop = True)
 
 tokenizer = LayoutLMTokenizerFast.from_pretrained("microsoft/layoutlm-base-uncased")
 
@@ -20,7 +20,7 @@ train_data = sroie.SROIE_Dataset(train_df, tokenizer)
 val_data = sroie.SROIE_Dataset(val_df, tokenizer) #not final
 
 training_args = TrainingArguments(
-    output_dir = '/scratch/ll3492/hw3/out',
+    output_dir = '/scratch/fs1493/mlu_project',
     num_train_epochs = 3,
     per_device_train_batch_size = 8,
     evaluation_strategy = "epoch"

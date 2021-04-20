@@ -18,10 +18,9 @@ def read_ocr_tagged_file(filepath):
         lines = file.readlines()
         lines = [line[:len(line) - 1] for line in lines]
         lines = [line.split(',') for line in lines]
-        lines = [{'bbox-top-left':line[:2],
-                  'bbox-bot-right':line[4:6],
+        lines = [{'bbox': [int(i) for i in line[:2] + line[4:6]],
                   'text':','.join(line[8:])
-                    } for line in lines]
+                 } for line in lines]
     return lines
 
 def read_img_file(filepath):
@@ -62,32 +61,29 @@ def get_data():
     names = ocr_tagged_filenames.intersection(label_filenames)
     
     labels = []
-    df2 = pd.DataFrame(inex = names, columns = {'ocr_output'})
+    df2 = pd.DataFrame(index = names, columns = {'ocr_output'})
     for name in names:
         df2.at[name, 'ocr_output'] = read_ocr_tagged_file(path_1 + name + ".txt") 
         labels += [read_label_file(path_2 + name + ".txt")]
-        df1 = pd.DataFrame(labels,index=names)
-    
+    df1 = pd.DataFrame(labels,index=names)
     train_df = pd.concat([df1, df2], axis=1).rename_axis('file_name').reset_index()
     return train_df
 
+def assign_line_label(line: str, entities):
+    line_set = list(filter(None, re.split(r"[ ,/()\[\]]", line)))#line.replace(",", "").strip().split()
+    thresholds = {'company': .5 + .5/(1+len(line_set)), 'date': 0.90, 'address': 0.70, 'total': 0.90}
+    match = "O"
+    for k, v in entities.iteritems():
+        entity_set = list(filter(None, re.split(r"[ ,/()\[\]]", v)))
+        matches_count = 0
+        for l in line_set:
+            if any(SequenceMatcher(None, a=l, b=b).ratio() > thresholds[k] for b in entity_set):
+                matches_count += 1
+        if matches_count == len(line_set) or matches_count == len(entity_set):
+            match = k.upper()
+    return match
+
 def raw_labels(data):
-    def assign_line_label(line: str, entities: pd.DataFrame):
-        line_set = list(filter(None, re.split(r"[ ,/()\[\]]", line)))#line.replace(",", "").strip().split()
-        thresholds = {'company': .5 + .5/len(line_set), 'date': 0.90, 'address': 0.70, 'total': 0.90}
-        match = "O"
-        for k, v in entities.iteritems():
-            entity_set = list(filter(None, re.split(r"[ ,/()\[\]]", v)))
-
-            matches_count = 0
-            for l in line_set:
-                if any(SequenceMatcher(None, a=l, b=b).ratio() > thresholds[k] for b in entity_set):
-                    matches_count += 1
-
-            if matches_count == len(line_set) or matches_count == len(entity_set):
-                match = k.upper()
-
-        return match
     labels = []
     for i in data.index:
         line_labels = []
@@ -168,6 +164,7 @@ def encode_data(dataset, tokenizer, max_seq_length=64):
     encoded, bboxes, labels = boiler_plate(dataset, tokenizer, max_seq_length)
     
     for i in range(len(encoded)):
-        encoded[i]['bbox'], encoded[i]['label'] = bboxes[i], labels[i]
+        encoded[i]['bbox'], encoded[i]['label'] = bboxes[i].squeeze(), labels[i].squeeze()
     
+    print(encoded[i]['bbox'].shape,encoded[i]['input_ids'].shape,encoded[i]['attention_mask'].shape)
     return encoded
