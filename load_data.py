@@ -5,6 +5,8 @@ import torch
 import re
 from difflib import SequenceMatcher
 from PIL import Image
+import numpy as np
+rng = np.random.default_rng(12345)
 
 def read_ocr_tagged_file(filepath):
     """
@@ -122,42 +124,80 @@ def process_labels(labels):
 
     return labels        
 
+def replace_char_with_same_type(char,percent_of_time = 1):
+    if percent_of_time != 1 and rng.random() > percent_of_time:
+        # no change
+        return char 
+    else:    
+        if 65 <= ord(char) <= 90: #ord("A") <= ord(char) <= ord("Z")
+            return chr(rng.integers(low=65, high=90))
+        elif 97 <= ord(char) <= 122: #ord("a") <= ord(char) <= ord("z")
+            return chr(rng.integers(low=97, high=122))
+        elif 48 <= ord(char) <= 57: #ord("0") <= ord(char) <= ord("9")
+            return chr(rng.integers(low=48, high=57))
+        elif char in " .,":
+            return " .,"[rng.integers(low=0, high=2)]
+        else:
+            return char
 
-def boiler_plate(dataset, tokenizer, max_seq_length):
+
+def agument_data(line, label, augmentation):
+    """
+    Input: words is string representing one line of ocr output
+    label: what we label that line (0-Nothing/1-Date/2-Total/3-Company/4-Address)
+    """
+    p_lines = augmentation["p_lines"] if (augmentation != None and "p_lines" in augmentation) else 1
+    p_characters = augmentation["p_char"] if (augmentation != None and "p_char" in augmentation) else 1
+
+    if rng.random() > p_lines:
+        return line
+    else:
+        new_line = ""
+        for char in line:
+            new_line += replace_char_with_same_type(char,percent_of_time = p_characters)
+        return new_line
+
+def boiler_plate(dataset, tokenizer, max_seq_length,augmentation=None):
     encoded = []
     bboxes = []
     labels = process_labels(raw_labels(dataset))
     adj_labels=[]
-    for i in dataset.index:
-        words = [element['text'] for element in dataset['ocr_output'][i]]
-        width = dataset['width'][i]
-        height = dataset['height'][i]
-        scaling_factor = torch.tensor([1000/width,1000/height,1000/width,1000/height])
-        bbox = [(element['bbox'] * scaling_factor).long() for element in dataset['ocr_output'][i]]
-        label = labels[i]
-        
-        token_boxes = []
-        label_list = []
-        for j, (word, box) in enumerate(zip(words, bbox)):
-            word_tokens = tokenizer.tokenize(word)
-            token_boxes.extend([box] * len(word_tokens))
-            label_list.extend([label[j]] * len(word_tokens))
-        
-        token_boxes = [[0,0,0,0]] + token_boxes + [[1000,1000,1000,1000]] + [[0,0,0,0]]*(max_seq_length - len(token_boxes) - 2)
-        label_list = [0] + label_list + [0] + [0]*(max_seq_length - len(label_list) - 2)
 
-        if len(token_boxes) > max_seq_length: #truncation of token boxes
-            token_boxes = token_boxes[:max_seq_length - 1] + [[1000,1000,1000,1000]]
-            label_list = label_list[:max_seq_length - 1] + [0]
-        
-        encoding = tokenizer(' '.join(words), padding = "max_length", truncation = True, max_length = max_seq_length, return_tensors = "pt")
-        encoded.append(encoding)
-        bboxes.append(torch.tensor([token_boxes])) 
-        adj_labels.append(torch.tensor([label_list]))
+    copies = augmentation["copies"] if (augmentation != None and "copies" in augmentation) else 1
+
+    for x in range(copies):
+        for i in dataset.index:
+            words = [element['text'] for element in dataset['ocr_output'][i]]
+            width = dataset['width'][i]
+            height = dataset['height'][i]
+            scaling_factor = torch.tensor([1000/width,1000/height,1000/width,1000/height])
+            bbox = [(element['bbox'] * scaling_factor).long() for element in dataset['ocr_output'][i]]
+            label = labels[i]
+
+            if augmentation != None:
+                words = augment_data(words,label,augmentation)
+            token_boxes = []
+            label_list = []
+            for j, (word, box) in enumerate(zip(words, bbox)):
+                word_tokens = tokenizer.tokenize(word)
+                token_boxes.extend([box] * len(word_tokens))
+                label_list.extend([label[j]] * len(word_tokens))
+            
+            token_boxes = [[0,0,0,0]] + token_boxes + [[1000,1000,1000,1000]] + [[0,0,0,0]]*(max_seq_length - len(token_boxes) - 2)
+            label_list = [0] + label_list + [0] + [0]*(max_seq_length - len(label_list) - 2)
+
+            if len(token_boxes) > max_seq_length: #truncation of token boxes
+                token_boxes = token_boxes[:max_seq_length - 1] + [[1000,1000,1000,1000]]
+                label_list = label_list[:max_seq_length - 1] + [0]
+            
+            encoding = tokenizer(' '.join(words), padding = "max_length", truncation = True, max_length = max_seq_length, return_tensors = "pt")
+            encoded.append(encoding)
+            bboxes.append(torch.tensor([token_boxes])) 
+            adj_labels.append(torch.tensor([label_list]))
 
     return encoded, bboxes, adj_labels
 
-def encode_data(dataset, tokenizer, max_seq_length=64):
+def encode_data(dataset, tokenizer, max_seq_length=64,augmentation = None):
     """
     Args:
         dataset
@@ -167,8 +207,8 @@ def encode_data(dataset, tokenizer, max_seq_length=64):
     Returns:
         batch encoding with input_ids, attention_mask and token_type_ids
     """
-    
-    encoded, bboxes, labels = boiler_plate(dataset, tokenizer, max_seq_length)
+
+    encoded, bboxes, labels = boiler_plate(dataset, tokenizer, max_seq_length,augmentation = augmentation)
     
     for i in range(len(encoded)):
         encoded[i]['bbox'], encoded[i]['label'] = bboxes[i], labels[i]

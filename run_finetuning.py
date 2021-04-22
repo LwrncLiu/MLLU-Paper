@@ -11,7 +11,13 @@ df = load_data.get_data()
 
 tokenizer = LayoutLMTokenizerFast.from_pretrained("microsoft/layoutlm-base-uncased")
 
-sroie_dataset = sroie.SROIE_Dataset(df, tokenizer)
+aug_params = {
+    "copies" : 3,
+    "p_lines" : 1.0, #100%
+    "p_char" : 1.0, #100%
+}
+
+sroie_dataset = sroie.SROIE_Dataset(df, tokenizer,augmentation = aug_params)
 
 train_size = int(0.8*len(sroie_dataset))
 test_size = len(sroie_dataset)-train_size
@@ -19,8 +25,8 @@ train_data, test_data = torch.utils.data.random_split(sroie_dataset, [train_size
 
 training_args = TrainingArguments(
     output_dir = '/scratch/fs1493/mlu_project',
-    num_train_epochs = 3,
-    per_device_train_batch_size = 8,
+    num_train_epochs = 5,
+    per_device_train_batch_size = 16,
     evaluation_strategy = "epoch"
     )
 trainer = Trainer(

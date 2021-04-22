@@ -10,9 +10,9 @@ import load_data
 class SROIE_Dataset(Dataset):
     """SROIE data loading"""
     
-    def __init__(self, dataframe, tokenizer, max_seq_length = 256):
+    def __init__(self, dataframe, tokenizer, max_seq_length = 256,augmentation = None):
         self.data = dataframe
-        self.encoded = load_data.encode_data(self.data, tokenizer, max_seq_length = max_seq_length)
+        self.encoded = load_data.encode_data(self.data, tokenizer, max_seq_length = max_seq_length,augmentation = None)
 
     
     def __len__(self):
