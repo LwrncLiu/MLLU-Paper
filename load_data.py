@@ -124,17 +124,28 @@ def process_labels(labels):
 
     return labels        
 
-def replace_char_with_same_type(char,percent_of_time = 1):
-    if percent_of_time != 1 and rng.random() > percent_of_time:
+def replace_char_with_same_type(char,percent_change = 1, percent_insert = 0, percent_delete = 0):
+    if percent_change != 1 and rng.random() > percent_of_time:
         # no change
         return char 
     else:    
         if 65 <= ord(char) <= 90: #ord("A") <= ord(char) <= ord("Z")
             return chr(rng.integers(low=65, high=90))
         elif 97 <= ord(char) <= 122: #ord("a") <= ord(char) <= ord("z")
+            if rng.random() < percent_delete:
+                return ""
+            elif rng.random() < percent_insert:
+                return chr(rng.integers(low=97, high=122)) + chr(rng.integers(low=97, high=122))
+            else:
+                return chr(rng.integers(low=97, high=122))
             return chr(rng.integers(low=97, high=122))
         elif 48 <= ord(char) <= 57: #ord("0") <= ord(char) <= ord("9")
-            return chr(rng.integers(low=48, high=57))
+            if rng.random() < percent_delete:
+                return ""
+            elif rng.random() < percent_insert:
+                return chr(rng.integers(low=48, high=57)) + chr(rng.integers(low=48, high=57))
+            else:
+                return chr(rng.integers(low=48, high=57))
         elif char in " .,":
             return " .,"[rng.integers(low=0, high=2)]
         else:
@@ -148,13 +159,15 @@ def agument_data(line, label, augmentation):
     """
     p_lines = augmentation["p_lines"] if (augmentation != None and "p_lines" in augmentation) else 1
     p_characters = augmentation["p_char"] if (augmentation != None and "p_char" in augmentation) else 1
+    p_insert = augmentation["p_insert"] if (augmentation != None and "p_insert" in augmentation) else 0
+    p_delete = augmentation["p_delete"] if (augmentation != None and "p_delete" in augmentation) else 0
 
     if rng.random() > p_lines:
         return line
     else:
         new_line = ""
         for char in line:
-            new_line += replace_char_with_same_type(char,percent_of_time = p_characters)
+            new_line += replace_char_with_same_type(char,percent_change = p_characters,percent_insert = p_insert,percent_delete = p_delete)
         return new_line
 
 def boiler_plate(dataset, tokenizer, max_seq_length,augmentation=None):
