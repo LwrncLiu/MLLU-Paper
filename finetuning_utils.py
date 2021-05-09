@@ -34,7 +34,8 @@ def model_init():
     
     model = LayoutLMForTokenClassification.from_pretrained(
         "microsoft/layoutlm-base-uncased",
-        num_labels=5
+        num_labels=5,
+        from_tf = True
         )
     
     model = model.to('cuda')
