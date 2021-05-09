@@ -19,12 +19,13 @@ aug_params = {
 
 sroie_dataset = sroie.SROIE_Dataset(df, tokenizer,augmentation = aug_params)
 
-train_size = int(0.8*len(sroie_dataset))
-test_size = len(sroie_dataset)-train_size
-train_data, test_data = torch.utils.data.random_split(sroie_dataset, [train_size, test_size])
+train_size = int(0.7*len(sroie_dataset))
+test_size = int(0.2*len(sroie_dataset))
+valid_size = len(sroie_dataset) - train_size - test_size
+train_data, test_data, valid_data = torch.utils.data.random_split(sroie_dataset, [train_size, test_size, valid_size])
 
 training_args = TrainingArguments(
-    output_dir = '/scratch/fs1493/mlu_project',
+    output_dir = '/scratch/kl2487/mllu',
     num_train_epochs = 5,
     per_device_train_batch_size = 16,
     evaluation_strategy = "epoch"
@@ -32,9 +33,10 @@ training_args = TrainingArguments(
 trainer = Trainer(
     model_init = finetuning_utils.model_init,
     train_dataset = train_data,
-    eval_dataset = test_data,
+    eval_dataset = valid_data,
     tokenizer = tokenizer,
     compute_metrics = finetuning_utils.compute_metrics,
     args = training_args
     )
 trainer.train()
+print(trainer.predict(test_data))
