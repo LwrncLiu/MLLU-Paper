@@ -28,7 +28,8 @@ training_args = TrainingArguments(
     output_dir = '/scratch/kl2487/mllu',
     num_train_epochs = 5,
     per_device_train_batch_size = 16,
-    evaluation_strategy = "epoch"
+    evaluation_strategy = "epoch",
+    do_predict=True
     )
 trainer = Trainer(
     model_init = finetuning_utils.model_init,
@@ -39,4 +40,6 @@ trainer = Trainer(
     args = training_args
     )
 trainer.train()
-print(trainer.predict(test_data))
+predictions=trainer.predict(valid_data)
+predictions.metrics
+print(predictions)
