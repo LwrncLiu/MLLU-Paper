@@ -125,7 +125,7 @@ def process_labels(labels):
     return labels        
 
 def replace_char_with_same_type(char,percent_change = 1, percent_insert = 0, percent_delete = 0):
-    if percent_change != 1 and rng.random() > percent_of_time:
+    if percent_change != 1 and rng.random() > percent_change:
         # no change
         return char 
     else:    
