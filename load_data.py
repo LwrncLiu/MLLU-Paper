@@ -152,7 +152,7 @@ def replace_char_with_same_type(char,percent_change = 1, percent_insert = 0, per
             return char
 
 
-def agument_data(line, label, augmentation):
+def augment_data(line, label, augmentation):
     """
     Input: words is string representing one line of ocr output
     label: what we label that line (0-Nothing/1-Date/2-Total/3-Company/4-Address)
