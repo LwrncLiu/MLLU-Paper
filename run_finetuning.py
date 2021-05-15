@@ -11,9 +11,7 @@ df = load_data.get_data()
 
 tokenizer = LayoutLMTokenizerFast.from_pretrained("microsoft/layoutlm-base-uncased")
 
-
-
-#augmentation type loop
+#loop for augmentation parameter
 for k in [[0,0,0], [2,0.8,0.8], [3,0.8,0.8]]:
     print("augmentation parameters: ", k)
     aug_params = {
@@ -24,11 +22,12 @@ for k in [[0,0,0], [2,0.8,0.8], [3,0.8,0.8]]:
     
     sroie_dataset = sroie.SROIE_Dataset(df, tokenizer, augmentation = aug_params)
 
-    #sample size loop
+    #loop for n sample size
     for n in [25, 50, 75, 100, 200, 300, 400]:
         train_size = n
         test_size = 0.15*len(sroie_dataset)
-        train_data, test_data = torch.utils.data.random_split(sroie_dataset, [train_size, test_size])
+        val_size = len(sroie_dataset) - train_size - test_size
+        train_data, test_data, extra_data = torch.utils.data.random_split(sroie_dataset, [train_size, test_size, val_size])
 
         training_args = TrainingArguments(
             output_dir = '/scratch/kl2487/mllu',
