@@ -178,7 +178,7 @@ def boiler_plate(dataset, tokenizer, max_seq_length,augmentation=None):
 
     copies = augmentation["copies"] if (augmentation != None and "copies" in augmentation) else 1
 
-    for x in range(copies):
+    for x in range(copies + 1):
         for i in dataset.index:
             words = [element['text'] for element in dataset['ocr_output'][i]]
             width = dataset['width'][i]
@@ -187,7 +187,7 @@ def boiler_plate(dataset, tokenizer, max_seq_length,augmentation=None):
             bbox = [(element['bbox'] * scaling_factor).long() for element in dataset['ocr_output'][i]]
             label = labels[i]
 
-            if augmentation != None:
+            if augmentation != None and x != 0:
                 words = augment_data(words,label,augmentation)
             token_boxes = []
             label_list = []
