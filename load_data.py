@@ -176,7 +176,7 @@ def boiler_plate(dataset, tokenizer, max_seq_length,augmentation=None):
     labels = process_labels(raw_labels(dataset))
     adj_labels=[]
 
-    copies = augmentation["copies"] if (augmentation != None and "copies" in augmentation) else 1
+    copies = augmentation["copies"] if (augmentation != None and "copies" in augmentation) else 0
 
     for x in range(copies + 1):
         for i in dataset.index:
