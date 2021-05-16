@@ -11,7 +11,7 @@ df = load_data.get_data()
 
 tokenizer = LayoutLMTokenizerFast.from_pretrained("microsoft/layoutlm-base-uncased")
 
-test_data = sroie.SROIE_Dataset(df.iloc[-200:])
+test_data = sroie.SROIE_Dataset(df.iloc[-200:], tokenizer, augmentation = None)
 
 for n in [25, 50, 75, 100, 200, 300, 400]:
     
