@@ -3,9 +3,9 @@
 *Repo for SROIE/MLLU paper implementation*
 
 
-![Three Epoch Plot](three_epochs.png)
+![Three Epoch Plot](three_epochs.PNG)
 
-![Five Epoch Plot](three_epochs.png)
+![Five Epoch Plot](three_epochs.PNG)
 
 Our basline results of fine-tuning LayoutLM with the vanilla data given in SROIE demonstrated an average F-1 score of 0.9014.
 The F-1 scores per-label prediction are as follows:
