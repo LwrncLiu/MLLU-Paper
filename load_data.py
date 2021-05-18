@@ -46,8 +46,8 @@ def read_label_file(filepath):
 
 def get_data():
     #change the path here if you are not FRED
-    path_1 = "/scratch/fs1493/mlu_project/SROIE/0325updated.task1train(626p)/"
-    path_2 = "/scratch/fs1493/mlu_project/SROIE/0325updated.task2train(626p)/"
+    path_1 = "/scratch/ll3492/SROIE/0325updated.task1train(626p)/"
+    path_2 = "/scratch/ll3492/SROIE/0325updated.task2train(626p)/"
     
     #list of all files .txt & .jpg from task1 (images + bounding boxes)
     files = [name for name in os.listdir(path_1) if os.path.isfile(path_1 + name)]
@@ -80,7 +80,7 @@ def assign_line_label(line: str, entities):
     thresholds = {'company': .5 + .5/(1+len(line_set)), 'date': 0.90, 'address': 0.70, 'total': 0.90}
     match = "O"
     for k, v in entities.iteritems():
-        entity_set = list(filter(None, re.split(r"[ ,/()\[\]]", v)))
+        entity_set = list(filter(None, re.split(r"[ ,/()\[\]]",str(v))))
         matches_count = 0
         for l in line_set:
             if any(SequenceMatcher(None, a=l, b=b).ratio() > thresholds[k] for b in entity_set):
@@ -152,7 +152,7 @@ def replace_char_with_same_type(char,percent_change = 1, percent_insert = 0, per
             return char
 
 
-def augment_data(line, label, augmentation):
+def augment_data(lines, label, augmentation):
     """
     Input: words is string representing one line of ocr output
     label: what we label that line (0-Nothing/1-Date/2-Total/3-Company/4-Address)
@@ -161,23 +161,25 @@ def augment_data(line, label, augmentation):
     p_characters = augmentation["p_char"] if (augmentation != None and "p_char" in augmentation) else 1
     p_insert = augmentation["p_insert"] if (augmentation != None and "p_insert" in augmentation) else 0
     p_delete = augmentation["p_delete"] if (augmentation != None and "p_delete" in augmentation) else 0
-
-    if rng.random() > p_lines:
-        return line
-    else:
-        new_line = ""
-        for char in line:
-            new_line += replace_char_with_same_type(char,percent_change = p_characters,percent_insert = p_insert,percent_delete = p_delete)
-        return new_line
+    new_lines = []
+    for line in lines:
+        if rng.random() > p_lines:
+            new_lines += [line]
+        else:
+            new_line = ""
+            for char in line:
+                new_line += replace_char_with_same_type(char,percent_change = p_characters,percent_insert = p_insert,percent_delete = p_delete)
+                new_lines += [new_line]
+    return new_lines
 
 def boiler_plate(dataset, tokenizer, max_seq_length,augmentation=None):
     encoded = []
     bboxes = []
     labels = process_labels(raw_labels(dataset))
     adj_labels=[]
-
+    print('augmentation copies', augmentation)
     copies = augmentation["copies"] if (augmentation != None and "copies" in augmentation) else 0
-
+    print('copies', copies)
     for x in range(copies + 1):
         for i in dataset.index:
             words = [element['text'] for element in dataset['ocr_output'][i]]
@@ -207,7 +209,6 @@ def boiler_plate(dataset, tokenizer, max_seq_length,augmentation=None):
             encoded.append(encoding)
             bboxes.append(torch.tensor([token_boxes])) 
             adj_labels.append(torch.tensor([label_list]))
-
     return encoded, bboxes, adj_labels
 
 def encode_data(dataset, tokenizer, max_seq_length=64,augmentation = None):
@@ -222,8 +223,7 @@ def encode_data(dataset, tokenizer, max_seq_length=64,augmentation = None):
     """
 
     encoded, bboxes, labels = boiler_plate(dataset, tokenizer, max_seq_length,augmentation = augmentation)
-    
     for i in range(len(encoded)):
         encoded[i]['bbox'], encoded[i]['label'] = bboxes[i], labels[i]
-    
+    print('encoded length in encode_data', len(encoded))
     return encoded
